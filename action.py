@@ -1,15 +1,12 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from player import Player
 
 
-class Action:
-    def __init__(self):
-        pass
-
+class Action(ABC):
     @abstractmethod
     def meets_conditions(self, player: Player) -> bool:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def play(self, player: Player) -> None:
-        pass
+        raise NotImplementedError

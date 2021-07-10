@@ -59,6 +59,7 @@ class Game:
         for p in self.players:
             p.link_to_game(self)
             p.give_access_to_project_deck(self.project_deck)
+            p.give_access_to_corporation_deck(self.corporation_deck)
             p.assign_starting_corporations(self.corporation_deck.draw(2))
             p.assign_starting_project_cards(self.project_deck.draw(8))
 
@@ -76,6 +77,9 @@ class Game:
 
     def get_turn(self) -> Turn:
         return self._turn_manager.turn
+
+    def get_phase(self) -> Phase:
+        return self._turn_manager.turn.phase
 
     def advance(self):
         pass

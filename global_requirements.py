@@ -30,7 +30,7 @@ class GlobalParameterPrize:
         if self.megacredits > 0:
             player.board.add_megacredits(self.megacredits)
         if self.cards > 0:
-            player.draw_cards(self.cards)
+            player.draw_project_cards(self.cards)
 
 
 class GlobalParameter(ABC):
