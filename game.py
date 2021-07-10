@@ -1,6 +1,7 @@
 import project_cards
 import corporation_cards
-from enums import Phase
+from enums import Phase, RoundStep
+from exceptions import GameException
 from global_requirements import *
 import random
 from deck import Deck, ProjectCard, CorporationCard
@@ -11,30 +12,62 @@ from dataclasses import dataclass
 class Turn:
     round: int
     phase: Optional[Phase]
+    step: RoundStep
 
 
 class TurnManager:
     def __init__(self):
-        self.turn = Turn(round=1, phase=None)
-        self.chosen_phases: list[Phase] = list()
+        self.turn = Turn(round=1, phase=None, step=RoundStep.Planning)
+        self.phases: list[Phase] = list()
 
-    def next_turn(self):
-        if self._next_phase() is None:
-            return Turn(self._next_round(), None)
+    def next_turn(self) -> Turn:
+        """
+        This method performs transitions between game rounds, phases and steps as per the rulebook
+        and returns the next Turn. Turn is a game state consisting of round, phase and round step.
+
+        :return: next Turn state
+        """
+        # We advance the round step in two cases:
+        #   1. If the turn has just started (Planning->ResolvePhases step transition)
+        #   2. If current phase is the last one players picked for this round (ResolvePhases->End step transition)
+        if self.turn.step == RoundStep.Planning \
+                or (self.turn.step == RoundStep.ResolvePhases and self._is_last_phase()):
+            return self._advance_step()
+        # Else, if we are somewhere in the middle of ResolvePhases step, we iterate through chosen phases
+        elif self.turn.step == RoundStep.ResolvePhases:
+            return self._advance_phase()
+        # Finally, if we are not in the Planning or ResolvePhases step, we must be in the End step,
+        # in which case we should advance the game to the next round
+        elif self.turn.step == RoundStep.End:
+            return self._advance_round()
+        # Something is wrong if we get here
         else:
-            return Turn(self.turn.round, self._next_phase())
+            raise GameException(f"Error while advancing turn, unknown transition from {self.turn} occurred")
 
-    def set_next_round_phases(self, phases: list[Phase]):
-        self.chosen_phases = phases
+    def _is_last_phase(self) -> bool:
+        return self.turn.phase == self.phases[-1]
 
-    def _next_round(self) -> int:
-        return self.turn.round + 1
+    def set_phases(self, phases: list[Phase]):
+        self.phases = phases
 
-    def _next_phase(self) -> Optional[Phase]:
-        if len(self.chosen_phases) == 0 or self.chosen_phases[-1] == self.turn.phase:
-            self.chosen_phases = list[Phase]()
-            return None
-        return self.chosen_phases[self.chosen_phases.index(Turn.phase)+1]
+    def _advance_round(self) -> Turn:
+        self.turn = Turn(self.turn.round + 1, None, RoundStep.Planning)
+        self.phases.clear()
+        return self.turn
+
+    def _advance_step(self) -> Turn:
+        self.turn = Turn(self.turn.round,
+                         self.phases[0] if self.turn.step == RoundStep.Planning else None,
+                         RoundStep((int(self.turn.step) + 1) % len(RoundStep)))
+        return self.turn
+
+    def _advance_phase(self) -> Turn:
+        if self.turn.phase is None or self.phases.index(self.turn.phase) == self.phases[-1]:
+            raise GameException("Phase cannot be changed.")
+        self.turn = Turn(self.turn.round,
+                         self.phases[self.phases.index(self.turn.phase) + 1],
+                         self.turn.step)
+        return self.turn
 
 
 class Game:
@@ -48,6 +81,7 @@ class Game:
         self.project_deck: Optional[Deck[ProjectCard]] = None
         self.banned_corporations = banned_corporations
         self.banned_projects = banned_projects
+        self.round_step: Optional[RoundStep] = None
 
     def start(self):
         self._randomize_player_order()

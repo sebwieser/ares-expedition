@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class CardColor(Enum):
@@ -27,7 +27,7 @@ class PlayerColor(Enum):
     Blue = 4
 
 
-class Phase(Enum):
+class Phase(IntEnum):
     Development = 1
     Construction = 2
     Action = 3
@@ -35,7 +35,7 @@ class Phase(Enum):
     Research = 5
 
 
-class RoundStep(Enum):
+class RoundStep(IntEnum):
     Planning = 1
     ResolvePhases = 2
     End = 3
