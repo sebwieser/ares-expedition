@@ -1,7 +1,7 @@
 from typing import Type, Optional
 from card import ProjectCard, CorporationCard, CardColor
 from deck import Deck
-from enums import PlayerColor, Phase
+from enums import PlayerColor, Phase, PlayerAction, RoundStep
 from exceptions import GameException
 from game import Game
 from global_requirements import GlobalParameter
@@ -10,13 +10,13 @@ from player_board import PlayerBoard
 
 class Player:
     def __init__(self, name: str, color: PlayerColor):
-        self.name = name
-        self.game = None
+        self.name: str = name
+        self.game: Optional[Game] = None
         self.terraforming_rating: int = 5
         self.greenery_tokens: int = 0
-        self.color = color
-        self.project_cards = None
-        self.starting_corporation_cards = None
+        self.color: PlayerColor = color
+        self.project_cards: Optional[list[ProjectCard]] = None
+        self.starting_corporation_cards: Optional[list[CorporationCard]] = None
         self.project_deck: Optional[Deck[ProjectCard]] = None
         self.corporation_deck: Optional[Deck[CorporationCard]] = None
         self.phase_cards: list[Phase] = [Phase.Development,
@@ -29,6 +29,20 @@ class Player:
         self.corporation_card: Optional[CorporationCard] = None
         self.board: PlayerBoard = PlayerBoard()
         self.played_project_cards: list[ProjectCard] = list[ProjectCard]()
+        self.redrew_starting_project_cards: bool = False
+        self.has_picked_corporation: bool = False
+        self.has_picked_phase_card: bool = False
+        self.has_played_green_card: bool = False
+        self.has_played_red_or_blue_card: bool = False
+        self.used_phase_bonus: bool = False
+
+    def is_eligible_for_bonus(self, phase: Phase):
+        return self.current_phase_card == phase and self.used_phase_bonus
+
+    def use_phase_bonus(self, phase: Phase):
+        if not self.is_eligible_for_bonus(phase):
+            raise GameException(f"Player not eligible for {phase} bonus.")
+        self.used_phase_bonus = True
 
     def link_to_game(self, game: Game) -> None:
         self.game = game
@@ -53,6 +67,7 @@ class Player:
         """
         self.corporation_card = card
         self.corporation_card.play(self)
+        self.has_picked_corporation = True
 
     def _discard_project_cards(self, cards: list[ProjectCard]) -> int:
         """
@@ -84,14 +99,17 @@ class Player:
         :param project_cards: Project cards to discard
         :return: Number of discarded (but also drawn) cards
         """
-        if self.corporation_card is not None:
-            raise GameException("Cannot redraw project cards after choosing the starting corporation.")
+        if self.has_picked_corporation:
+            raise GameException("Cannot redraw starting project cards after choosing the corporation.")
+        if self.redrew_starting_project_cards:
+            raise GameException("Cannot redraw starting project cards more than once.")
         amount = self._discard_project_cards(project_cards)
         self.draw_project_cards(amount)
+        self.redrew_starting_project_cards = True
         return amount
 
     def increase_global_parameter(self, parameter_type: Type[GlobalParameter]) -> None:
-        prize = self.game.global_requirements.increase_parameter(parameter_type, self.game.get_turn())
+        prize = self.game.global_requirements.increase_parameter(parameter_type, self.game.get_current_turn())
         prize.award_to_player(self)
 
     def add_terraforming_rating(self, points: int) -> int:
@@ -125,7 +143,7 @@ class Player:
 
         :raises GameException: if outside the `Phase.Production` phase
         """
-        current_phase = self.game.get_phase()
+        current_phase = self.game.get_current_phase()
         if current_phase != Phase.Production:
             raise GameException(f"Cannot produce outside the {Phase.Production} phase.")
         self.board.add_heat(self.board.production_heat)
@@ -144,6 +162,9 @@ class Player:
         self.project_cards.extend(drawn_cards)
         return len(drawn_cards)
 
+    def get_project_hand_size(self) -> int:
+        return len(self.project_cards)
+
     def choose_phase_card(self, phase_card: Phase) -> Phase:
         """
         Sets the chosen phase card for this round.
@@ -153,12 +174,13 @@ class Player:
         :raises GameException: if player chose the same card two rounds in a row,
         or if the player chose the phase card this round.
         """
-        if self.current_phase_card is not None:
+        if self.has_picked_phase_card:
             raise GameException("Player already chose the phase card this round.")
         if phase_card == self.last_phase_card:
             raise GameException("Cannot play the same phase card twice in a row.")
         self.last_phase_card = self.current_phase_card
         self.current_phase_card = phase_card
+        self.has_picked_phase_card = True
         return self.current_phase_card
 
     def play_project_card(self, card: ProjectCard) -> None:
@@ -170,22 +192,86 @@ class Player:
         :param card: Project card to play
         :raises GameException: if the player doesn't meet requirements for playing the card.
         """
-        if not self.can_play_project_card(card):
+        if not card.player_meets_conditions(self):
             raise GameException(f"Requirements for playing the card {card} not met.")
         card.play(self)
+        self._set_played_color(card.color)
         self.played_project_cards += card
         self.project_cards.remove(card)
 
-    def can_play_project_card(self, card: ProjectCard) -> bool:
-        """
-        Checks whether the player meets all conditions to play the card.
+    def _set_played_color(self, card_color: CardColor) -> None:
+        if card_color == CardColor.Green:
+            self.has_played_green_card = True
+        else:
+            self.has_played_red_or_blue_card = True
 
-        :param card: The card to test
-        :return: True if player meets the conditions, False otherwise
-        """
-        current_phase: Phase = self.game.get_phase()
-        if current_phase not in ([Phase.Development, Phase.Construction]) \
-                or (current_phase.Development and card.color != CardColor.Green)\
-                or (current_phase.Construction and card.color == CardColor.Green):
-            return False
-        return card.player_meets_conditions(self)
+    def get_playable_cards(self) -> list[ProjectCard]:
+        return [c for c in self.project_cards if c.player_meets_conditions(self)]
+
+    def get_available_actions(self) -> list[PlayerAction]:
+        if self.game.is_finished():
+            return []
+        if self.game.is_game_start():
+            return self._get_game_start_actions()
+        phase, step = self.game.get_current_phase(), self.game.get_current_step()
+        actions: list[PlayerAction] = []
+        # Players can sell project cards at any time, given their hand isn't empty
+        if self.get_project_hand_size() > 0:
+            actions += PlayerAction.SellProjectCards
+        # Other actions depend on the current step, phase and global requirements status:
+        if step == RoundStep.Planning:
+            actions.extend(self._get_planning_actions())
+        elif step == RoundStep.ResolvePhases:
+            if phase == Phase.Development:
+                actions.extend(self._get_development_phase_actions())
+            elif phase == Phase.Construction:
+                actions.extend(self._get_construction_phase_actions())
+            elif phase == Phase.Action:
+                actions.extend(self._get_action_phase_actions())
+            elif phase == Phase.Production:
+                actions.extend(self._get_production_phase_actions())
+            elif phase == Phase.Research:
+                actions.extend(self._get_research_phase_actions())
+        elif step == RoundStep.End:
+            actions.extend(self._get_end_actions())
+        return actions
+
+    def _get_action_phase_actions(self) -> list[PlayerAction]:
+        raise NotImplementedError
+
+    def _get_construction_phase_actions(self) -> list[PlayerAction]:
+        actions: list[PlayerAction] = []
+        if len(self.get_playable_cards()) > 0:
+            actions += PlayerAction.PlayRedOrBlueCard
+        if self.is_eligible_for_bonus(Phase.Construction):
+            actions += PlayerAction.DrawProjectCard
+        return actions
+
+    def _get_development_phase_actions(self) -> list[PlayerAction]:
+        actions: list[PlayerAction] = []
+        if len(self.get_playable_cards()) > 0:
+            actions += PlayerAction.PlayGreenCard
+        return actions
+
+    def _get_planning_actions(self) -> list[PlayerAction]:
+        actions: list[PlayerAction] = []
+        if not self.has_picked_phase_card:
+            actions += PlayerAction.ChoosePhaseCard
+        return actions
+
+    def _get_game_start_actions(self) -> list[PlayerAction]:
+        actions: list[PlayerAction] = list()
+        if not self.has_picked_corporation:
+            actions += PlayerAction.ChooseCorporation
+            if not self.redrew_starting_project_cards:
+                actions += PlayerAction.RedrawProjectCards
+        return actions
+
+    def _get_production_phase_actions(self) -> list[PlayerAction]:
+        raise NotImplementedError
+
+    def _get_research_phase_actions(self) -> list[PlayerAction]:
+        raise NotImplementedError
+
+    def _get_end_actions(self) -> list[PlayerAction]:
+        raise NotImplementedError

@@ -1,7 +1,7 @@
 from typing import Optional
 
 from action import Action
-from card_requirements import CardRequirements
+from card_requirements import CardRequirements, DefaultGreenCardRequirements, DefaultRedBlueCardRequirements
 from effect import Effect
 from enums import Tag, CardColor
 from player import Player
@@ -30,10 +30,9 @@ class CorporationCard(Card):
         self.starting_resources.play(player)
 
 
-class ProjectCard(Card):
-    def __init__(self, name: str, cost: int, color: CardColor, points: int = 0,
-                 requirements: Optional[CardRequirements] = None, tags: list[Tag] = None,
-                 action: Action = None, effect: Effect = None):
+class ProjectCard(Card, ABC):
+    def __init__(self, name: str, cost: int, color: CardColor, requirements: CardRequirements, points: int = 0,
+                 tags: list[Tag] = None, action: Action = None, effect: Effect = None):
         super().__init__(name, tags, action, effect)
         self.cost = cost
         self.points = points
@@ -41,10 +40,27 @@ class ProjectCard(Card):
         self.color = color
         self.resources: int = 0
 
+    @abstractmethod
     def play(self, player: Player):
-        pass
+        raise NotImplementedError
 
     def player_meets_conditions(self, player: Player) -> bool:
-        if self.requirements is not None:
-            return self.requirements.meets_conditions(player)
-        return True
+        return self.requirements.meets_conditions(player)
+
+
+class GreenProjectCard(ProjectCard, ABC):
+    def __init__(self, name: str, cost: int, requirements: CardRequirements = DefaultGreenCardRequirements(),
+                 points: int = 0, tags: list[Tag] = None, action: Action = None, effect: Effect = None):
+        super().__init__(name, cost, CardColor.Green, requirements, points, tags, action, effect)
+
+
+class BlueProjectCard(ProjectCard, ABC):
+    def __init__(self, name: str, cost: int, requirements: CardRequirements = DefaultRedBlueCardRequirements(),
+                 points: int = 0, tags: list[Tag] = None, action: Action = None, effect: Effect = None):
+        super().__init__(name, cost, CardColor.Blue, requirements, points, tags, action, effect)
+
+
+class RedProjectCard(ProjectCard, ABC):
+    def __init__(self, name: str, cost: int, requirements: CardRequirements = DefaultRedBlueCardRequirements(),
+                 points: int = 0, tags: list[Tag] = None, action: Action = None, effect: Effect = None):
+        super().__init__(name, cost, CardColor.Red, requirements, points, tags, action, effect)

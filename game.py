@@ -2,6 +2,7 @@ import project_cards
 import corporation_cards
 from enums import Phase, RoundStep
 from exceptions import GameException
+from game_state import GameState
 from global_requirements import *
 import random
 from deck import Deck, ProjectCard, CorporationCard
@@ -19,6 +20,7 @@ class TurnManager:
     def __init__(self):
         self.turn = Turn(round=1, phase=None, step=RoundStep.Planning)
         self.phases: list[Phase] = list()
+        self.is_game_start: bool = True
 
     def next_turn(self) -> Turn:
         """
@@ -27,6 +29,9 @@ class TurnManager:
 
         :return: next Turn state
         """
+        if self.is_game_start:
+            self.is_game_start = False
+            return self.turn
         # We advance the round step in two cases:
         #   1. If the turn has just started (Planning->ResolvePhases step transition)
         #   2. If current phase is the last one players picked for this round (ResolvePhases->End step transition)
@@ -82,6 +87,7 @@ class Game:
         self.banned_corporations = banned_corporations
         self.banned_projects = banned_projects
         self.round_step: Optional[RoundStep] = None
+        self.final_turn: Optional[Turn] = None
 
     def start(self):
         self._randomize_player_order()
@@ -109,14 +115,27 @@ class Game:
         self.corporation_deck = Deck[CorporationCard](corporations)
         self.corporation_deck.shuffle()
 
-    def get_turn(self) -> Turn:
+    def get_current_turn(self) -> Turn:
         return self._turn_manager.turn
 
-    def get_phase(self) -> Phase:
+    def get_current_phase(self) -> Phase:
         return self._turn_manager.turn.phase
 
-    def advance(self):
-        pass
+    def get_current_round(self) -> int:
+        return self._turn_manager.turn.round
+
+    def get_current_step(self) -> RoundStep:
+        return self._turn_manager.turn.step
+
+    def is_game_start(self) -> bool:
+        return self._turn_manager.is_game_start
+
+    # TODO: need to set the final_turn when global requirements get maxed out
+    def is_finished(self) -> bool:
+        return self.global_requirements.end_game_condition_met() and self.get_current_phase() != self.final_turn.phase
+
+    def advance(self) -> GameState:
+        raise NotImplementedError
 
     def _randomize_player_order(self) -> None:
         random.shuffle(self.players)

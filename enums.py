@@ -39,3 +39,22 @@ class RoundStep(IntEnum):
     Planning = 1
     ResolvePhases = 2
     End = 3
+
+
+class PlayerAction(Enum):
+    ChooseCorporation = 1,
+    RedrawProjectCards = 2,
+    SellProjectCards = 3,
+    PlayGreenCard = 4,
+    DrawProjectCard = 5,
+    PlayRedOrBlueCard = 6,
+    ChoosePhaseCard = 7,
+    ResolveActionAbilities = 8,
+    BuildGreenery = 9,
+    RaiseTemperature = 10
+    StandardActionBuildGreenery = 11,
+    StandardActionRaiseTemperature = 12,
+    StandardActionFlipOcean = 13,
+    Produce = 14,
+    Research = 15,
+    DiscardDownTo10Cards = 16
