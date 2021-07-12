@@ -1,5 +1,5 @@
 from typing import Type, Optional
-from card import ProjectCard, CorporationCard, CardColor
+from card import ProjectCard, CorporationCard, CardColor, BlueProjectCard
 from deck import Deck
 from enums import PlayerColor, Phase, PlayerAction, RoundStep
 from exceptions import GameException
@@ -35,6 +35,14 @@ class Player:
         self.has_played_green_card: bool = False
         self.has_played_red_or_blue_card: bool = False
         self.used_phase_bonus: bool = False
+        self.has_produced: bool = False
+        self.has_researched: bool = False
+        self.greenery_plant_cost: int = Game.DEFAULT_GREENERY_PLANT_COST
+        self.greenery_mc_cost: int = Game.DEFAULT_GREENERY_MC_COST
+        self.temperature_heat_cost: int = Game.DEFAULT_TEMPERATURE_HEAT_COST
+        self.temperature_mc_cost: int = Game.DEFAULT_TEMPERATURE_MC_COST
+        self.ocean_mc_cost: int = Game.DEFAULT_OCEAN_MC_COST
+        self.available_actions: list[PlayerAction] = list[PlayerAction]()
 
     def is_eligible_for_bonus(self, phase: Phase):
         return self.current_phase_card == phase and self.used_phase_bonus
@@ -143,13 +151,13 @@ class Player:
 
         :raises GameException: if outside the `Phase.Production` phase
         """
-        current_phase = self.game.get_current_phase()
-        if current_phase != Phase.Production:
-            raise GameException(f"Cannot produce outside the {Phase.Production} phase.")
+        if not self.is_eligible_for_action(PlayerAction.Produce):
+            raise GameException(f"Cannot perform action {PlayerAction.Produce}.")
         self.board.add_heat(self.board.production_heat)
         self.board.add_plants(self.board.production_plants)
         self.board.add_megacredits(self.board.production_megacredits)
         self.draw_project_cards(self.board.production_cards)
+        self.has_produced = True
 
     def draw_project_cards(self, amount: int) -> int:
         """
@@ -234,10 +242,29 @@ class Player:
                 actions.extend(self._get_research_phase_actions())
         elif step == RoundStep.End:
             actions.extend(self._get_end_actions())
+        else:
+            raise GameException("Unknown game state detected.")
         return actions
 
+    def get_cards_with_playable_actions(self) -> list[BlueProjectCard]:
+        return [card for card in self.played_project_cards
+                if isinstance(card, BlueProjectCard) and card.is_action_playable(self)]
+
     def _get_action_phase_actions(self) -> list[PlayerAction]:
-        raise NotImplementedError
+        actions: list[PlayerAction] = []
+        if len(self.get_cards_with_playable_actions()) > 0:
+            actions += PlayerAction.ResolveActionAbilities
+        if self.board.plants >= self.greenery_plant_cost:
+            actions += PlayerAction.BuildGreenery
+        if self.board.heat >= self.temperature_heat_cost:
+            actions += PlayerAction.RaiseTemperature
+        if self.board.megacredits >= self.greenery_mc_cost:
+            actions += PlayerAction.StandardActionBuildGreenery
+        if self.board.megacredits >= self.temperature_mc_cost:
+            actions += PlayerAction.StandardActionFlipOcean
+        if self.board.megacredits >= self.ocean_mc_cost:
+            actions += PlayerAction.StandardActionRaiseTemperature
+        return actions
 
     def _get_construction_phase_actions(self) -> list[PlayerAction]:
         actions: list[PlayerAction] = []
@@ -268,10 +295,13 @@ class Player:
         return actions
 
     def _get_production_phase_actions(self) -> list[PlayerAction]:
-        raise NotImplementedError
+        return [PlayerAction.Produce] if not self.has_produced else []
 
     def _get_research_phase_actions(self) -> list[PlayerAction]:
-        raise NotImplementedError
+        return [PlayerAction.Research] if not self.has_researched else []
 
     def _get_end_actions(self) -> list[PlayerAction]:
-        raise NotImplementedError
+        return [PlayerAction.DiscardDownTo10Cards] if self.get_project_hand_size() > 10 else []
+
+    def is_eligible_for_action(self, player_action: PlayerAction) -> bool:
+        return player_action in self.available_actions

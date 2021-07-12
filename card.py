@@ -3,7 +3,7 @@ from typing import Optional
 from action import Action
 from card_requirements import CardRequirements, DefaultGreenCardRequirements, DefaultRedBlueCardRequirements
 from effect import Effect
-from enums import Tag, CardColor
+from enums import Tag, CardColor, Phase
 from player import Player
 from abc import ABC, abstractmethod
 
@@ -21,8 +21,8 @@ class Card(ABC):
 
 
 class CorporationCard(Card):
-    def __init__(self, name: str, tags: list[Tag], starting_resources: Action, action: Optional[Action],
-                 effect: Optional[Effect]):
+    def __init__(self, name: str, tags: list[Tag], starting_resources: Action, action: Optional[Action] = None,
+                 effect: Optional[Effect] = None):
         super().__init__(name, tags, action, effect)
         self.starting_resources = starting_resources
 
@@ -58,6 +58,11 @@ class BlueProjectCard(ProjectCard, ABC):
     def __init__(self, name: str, cost: int, requirements: CardRequirements = DefaultRedBlueCardRequirements(),
                  points: int = 0, tags: list[Tag] = None, action: Action = None, effect: Effect = None):
         super().__init__(name, cost, CardColor.Blue, requirements, points, tags, action, effect)
+        self.action_played_this_round: bool = False
+
+    def is_action_playable(self, player: Player) -> bool:
+        return self.action is not None and self.action.meets_conditions(player) and \
+               (not self.action_played_this_round or player.is_eligible_for_bonus(Phase.Action))
 
 
 class RedProjectCard(ProjectCard, ABC):

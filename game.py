@@ -76,6 +76,12 @@ class TurnManager:
 
 
 class Game:
+    DEFAULT_GREENERY_MC_COST: int = 20
+    DEFAULT_GREENERY_PLANT_COST: int = 8
+    DEFAULT_TEMPERATURE_MC_COST: int = 14
+    DEFAULT_TEMPERATURE_HEAT_COST: int = 8
+    DEFAULT_OCEAN_MC_COST: int = 15
+
     def __init__(self, players: list[Player],
                  banned_corporations: Optional[list[CorporationCard]],
                  banned_projects: Optional[list[ProjectCard]]):
