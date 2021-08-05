@@ -6,10 +6,8 @@ name: Terraforming Mars - Ares Expedition
 on: [push, pull_request]
 
 jobs:
-  build:
-
-    runs-on: [ubuntu-latest, windows-latest, macOS-latest]
-    
+  build-linux:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
