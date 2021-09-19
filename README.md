@@ -23,25 +23,41 @@ Prerequisites:
 Clone the project, then `cd` into the repository root and run:
 #### Linux/MacOS:
     pip install -r requirements.txt
-    EXPORT FLASK_APP=aresexpedition
-    EXPORT FLASK_ENV=development
-    EXPORT APP_CONFIG_FILE=<config_absolute_path>
-    EXPORT TEST_CONFIG_FILE=<test_config_absolute_path>
+    export FLASK_APP=aresexpedition
+    export FLASK_ENV=development
     flask run
 
 #### Windows:
     pip install -r requirements.txt
     SET FLASK_APP=aresexpedition
     SET FLASK_ENV=development
-    SET APP_CONFIG_FILE=<config_absolute_path>
-    SET TEST_CONFIG_FILE=<test_config_absolute_path>
     flask run
 
-Make sure to:
-* replace the `<config_absolute_path>` with absolute path to `ares-expedition\config\development.py`.
-* replace the `<test_config_absolute_path>` with absolute path to `ares-expedition\config\test.py`.
-
 And that's it, you're all set!
+
+##### _Special note: Overriding config file locations_
+It's important to note that`FLASK_APP` and `FLASK_ENV` environment variables are mandatory 
+to run the project in any Flask environment (`production` or `development`).
+
+But, in `development` environment, it is not mandatory to set the 3 config file variables manually: `APP_CONFIG_FILE`, `TEST_CONFIG_FILE`, `LOG_CONFIG_FILE`.
+If omitted, they will be set to their default project values if possible.
+
+If you wish to change those default locations, follow these instructions:
+
+###### Linux/MacOS
+    export APP_CONFIG_FILE=<config_absolute_path>
+    export TEST_CONFIG_FILE=<test_config_absolute_path>
+    export LOG_CONFIG_FILE=<log_config_absolute_path>
+
+###### Windows
+    SET APP_CONFIG_FILE=<config_absolute_path>
+    SET TEST_CONFIG_FILE=<test_config_absolute_path>
+    SET LOG_CONFIG_FILE=<log_config_absolute_path>
+
+Make sure to:
+* replace the `<config_absolute_path>` with absolute path to the desired _existing_ location.
+* replace the `<test_config_absolute_path>` with absolute path to the desired _existing_ location.
+* replace the `<log_config_absolute_path>` with absolute path to the desired _existing_ location.
 
 ### Testing
 To execute the test battery, run: `python -m pytest`

@@ -11,8 +11,6 @@ jobs:
     env:
       FLASK_APP: aresexpedition
       FLASK_ENV: development
-      APP_CONFIG_FILE: /home/runner/work/ares-expedition/ares-expedition/config/default.py
-      TEST_CONFIG_FILE: /home/runner/work/ares-expedition/ares-expedition/config/test.py
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
@@ -38,8 +36,6 @@ jobs:
     env:
       FLASK_APP: aresexpedition
       FLASK_ENV: development
-      APP_CONFIG_FILE: D:\a\ares-expedition\ares-expedition\config\default.py
-      TEST_CONFIG_FILE: D:\a\ares-expedition\ares-expedition\config\test.py
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
@@ -65,8 +61,6 @@ jobs:
     env:
       FLASK_APP: aresexpedition
       FLASK_ENV: development
-      APP_CONFIG_FILE: /Users/runner/work/ares-expedition/ares-expedition/config/default.py
-      TEST_CONFIG_FILE: /Users/runner/work/ares-expedition/ares-expedition/config/test.py
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.9
