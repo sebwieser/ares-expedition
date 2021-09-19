@@ -1,0 +1,30 @@
+version: 1
+formatters:
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+    stream: ext://sys.stdout
+  rotfile:
+    class : logging.handlers.TimedRotatingFileHandler
+    level: DEBUG
+    formatter: simple
+    filename: logs/ares.log
+    when: H
+    interval: 1
+loggers:
+  aresexpedition:
+    level: DEBUG
+    handlers: [console, rotfile]
+    propagate: no
+  werkzeug:
+    level: DEBUG
+    handlers: [console, rotfile]
+    propagate: no
+root:
+  level: DEBUG
+  handlers: [console, rotfile]
+  loggers: [dev, prod]

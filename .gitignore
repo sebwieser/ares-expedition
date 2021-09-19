@@ -3,3 +3,4 @@ venv*
 __pycache__
 instance/config.py
 *.pyc
+logs
