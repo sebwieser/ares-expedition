@@ -16,7 +16,7 @@ class EnvironmentVariables(Enum):
         """
         Returns env variable value
         """
-        return os.environ[self.name]
+        return os.environ.get(self.name)
 
     @staticmethod
     def set_undefined_to_default() -> None:
@@ -24,9 +24,8 @@ class EnvironmentVariables(Enum):
         Sets the undefined env variables to their configured default values
         """
         for env_var in EnvironmentVariables:
-            try:
-                os.environ[env_var.name]
-            except KeyError:
+            e = os.environ.get(env_var.name)
+            if e is None:
                 print(f"Environment variable {env_var.name} is undefined. "
                       f"Setting it to default value: {str(Path(env_var.value).resolve())}")
                 os.environ[env_var.name] = str(Path(env_var.value).resolve())
@@ -40,9 +39,8 @@ class EnvironmentVariables(Enum):
         """
         all_defined: bool = True
         for env_var in EnvironmentVariables:
-            try:
-                os.environ[env_var.name]
-            except KeyError as e:
+            e = os.environ.get(env_var.name)
+            if e is None:
                 print(f"ERROR: Environment variable {env_var.name} is not defined.")
                 all_defined = False
         return all_defined
