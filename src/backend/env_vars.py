@@ -23,9 +23,9 @@ class AresEnvironmentVariables(Enum):
     Use this to check if variables are defined, or set the undefined ones to default values.
     """
     # Format: ENVIRONMENT VARIABLE = DEFAULT
-    APP_CONFIG_FILE = "config/development.py"
-    TEST_CONFIG_FILE = "config/test.py"
-    LOG_CONFIG_FILE = "config/logging.yaml"
+    APP_CONFIG_FILE = Path(__file__).parent.resolve().joinpath("config/development.py")
+    TEST_CONFIG_FILE = Path(__file__).parent.resolve().joinpath("config/test.py")
+    LOG_CONFIG_FILE = Path(__file__).parent.resolve().joinpath("config/logging.yaml")
 
     def get(self):
         """

@@ -23,13 +23,13 @@ Prerequisites:
 Clone the project, then `cd` into the repository root and run:
 #### Linux/MacOS:
     pip install -r requirements.txt
-    export FLASK_APP=aresexpedition
+    export FLASK_APP=src/backend/aresexpedition
     export FLASK_ENV=development
     flask run
 
 #### Windows:
     pip install -r requirements.txt
-    SET FLASK_APP=aresexpedition
+    SET FLASK_APP=src/backend/aresexpedition
     SET FLASK_ENV=development
     flask run
 

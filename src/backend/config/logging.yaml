@@ -12,7 +12,8 @@ handlers:
     class : logging.handlers.TimedRotatingFileHandler
     level: DEBUG
     formatter: simple
-    filename: logs/ares.log
+    # TODO: make this dynamic:
+    filename: src/backend/logs/ares.log
     when: H
     interval: 1
 loggers:
