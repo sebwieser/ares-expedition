@@ -1,5 +1,5 @@
 atomicwrites==1.4.0
-attrs==21.2.0
+attrs==21.4.0
 click==8.0.3
 colorama==0.4.4
 Flask==2.0.2
