@@ -38,7 +38,7 @@ jobs:
 
     - name: Install FE dependencies
       run: npm install
-      working-directory: src/frontend/aresexpedition
+      working-directory: frontend
 
     - name: Lint with flake8
       run: |
@@ -49,12 +49,12 @@ jobs:
 
     - name: Test BE
       run: python -m pytest
-      working-directory: src/backend
+      working-directory: backend
 
     - name: Build FE
       run: npm run build
-      working-directory: src/frontend/aresexpedition
+      working-directory: frontend
 
     - name: Test FE
       run: npm test
-      working-directory: src/frontend/aresexpedition
+      working-directory: frontend

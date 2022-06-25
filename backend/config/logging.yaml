@@ -13,7 +13,7 @@ handlers:
     level: DEBUG
     formatter: simple
     # TODO: make this dynamic:
-    filename: src/backend/logs/ares.log
+    filename: logs/ares.log
     when: H
     interval: 1
 loggers:

@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
 from flask import Flask
 from .views.homepage import homepage
 from logging.config import dictConfig
@@ -37,6 +39,9 @@ def create_app(test: bool = False) -> Flask:
     :return: An instance of a Flask app
     """
 
+    if test:
+        # pytest doesn't load the flask environment variables, so we need to do that manually:
+        load_dotenv()
     if FlaskEnvironmentVariables.FLASK_ENV.get() == "development":
         AresEnvironmentVariables.set_undefined_to_default()
     if not AresEnvironmentVariables.all_defined():
@@ -58,7 +63,7 @@ def create_app(test: bool = False) -> Flask:
     app.config.from_object(default_config_file)
 
     if not test:
-        # 2. Load the environment related config file defined in the environment variable
+        # 2. Load environment related config file defined in the environment variable
         # Variables defined here will override those in the default configuration
         try:
             app.logger.info(f"Overriding default settings using the file defined in {config_file_envvar} env var")
