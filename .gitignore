@@ -1,6 +1,6 @@
-venv*
+*venv*
 .idea
 __pycache__
-instance/config.py
+**/instance/config.py
 *.pyc
 logs
