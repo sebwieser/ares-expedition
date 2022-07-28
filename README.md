@@ -25,10 +25,9 @@ Before installing the project, you will need a few tools:
 ### 2. Installing
 Clone the project, then `cd` into the repository root and run:
 #### Windows
-    :: Open cmd/powershell as admin
     install.bat
 #### Linux/MacOS
-    TODO: Create the actual script. It's actually quite similar to Win version...
+    install.sh
 
 ### 3. Additional configuration
 It's important to note that`FLASK_APP` and `FLASK_ENV` environment variables are mandatory 
@@ -50,7 +49,7 @@ To execute the backend test battery, run: `cd backend && python -m pytest`
 #### Windows
     run.bat
 #### Linux/MacOS
-    TODO: Create the actual script. It's actually quite similar to Win version...
+    run.sh
 
 ## License
 GPLv3
