@@ -19,5 +19,5 @@ PyYAML==6.0
 toml==0.10.2
 tomli==2.0.1
 watchdog==2.1.9
-Werkzeug==2.2.1
+Werkzeug==2.2.2
 zipp==3.8.1
